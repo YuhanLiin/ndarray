@@ -312,6 +312,18 @@ pub trait DimensionExt {
     ///
     /// *Panics* if `axis` is out of bounds.
     fn set_axis(&mut self, axis: Axis, value: Ix);
+
+    /// Get as stride
+    #[inline]
+    fn get_stride(&self, axis: Axis) -> isize {
+        self.axis(axis) as isize
+    }
+
+    /// Set as stride
+    #[inline]
+    fn set_stride(&mut self, axis: Axis, value: isize) {
+        self.set_axis(axis, value as usize)
+    }
 }
 
 impl<D> DimensionExt for D
