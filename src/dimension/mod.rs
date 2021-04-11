@@ -731,12 +731,46 @@ where
     }
 }
 
+/// Remove axes with length one, except never removing the last axis.
+pub(crate) fn squeeze<D>(dim: &mut D, strides: &mut D)
+where
+    D: Dimension,
+{
+    if let Some(_) = D::NDIM {
+        return;
+    }
+    debug_assert_eq!(dim.ndim(), strides.ndim());
+
+    // Count axes with dim == 1; we keep axes with d == 0 or d > 1
+    let mut ndim_new = 0;
+    for &d in dim.slice() {
+        if d != 1 { ndim_new += 1; }
+    }
+    ndim_new = Ord::max(1, ndim_new);
+    let mut new_dim = D::zeros(ndim_new);
+    let mut new_strides = D::zeros(ndim_new);
+    let mut i = 0;
+    for (&d, &s) in izip!(dim.slice(), strides.slice()) {
+        if d != 1 {
+            new_dim[i] = d;
+            new_strides[i] = s;
+            i += 1;
+        }
+    }
+    if i == 0 {
+        new_dim[i] = 1;
+        new_strides[i] = 1;
+    }
+    *dim = new_dim;
+    *strides = new_strides;
+}
+
 #[cfg(test)]
 mod test {
     use super::{
         arith_seq_intersect, can_index_slice, can_index_slice_not_custom, extended_gcd,
         max_abs_offset_check_overflow, slice_min_max, slices_intersect,
-        solve_linear_diophantine_eq, IntoDimension,
+        solve_linear_diophantine_eq, IntoDimension, squeeze,
     };
     use crate::error::{from_kind, ErrorKind};
     use crate::slice::Slice;
@@ -1054,5 +1088,35 @@ mod test {
             s![.., ..;9],
             s![.., 3..;6, NewAxis]
         ));
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn test_squeeze() {
+        let dyndim = Dim::<&[usize]>;
+
+        let mut d = dyndim(&[1, 2, 1, 1, 3, 1]);
+        let mut s = dyndim(&[!0, !0, !0, 9, 10, !0]);
+        let dans = dyndim(&[2, 3]);
+        let sans = dyndim(&[!0, 10]);
+        squeeze(&mut d, &mut s);
+        assert_eq!(d, dans);
+        assert_eq!(s, sans);
+
+        let mut d = dyndim(&[1, 1]);
+        let mut s = dyndim(&[3, 4]);
+        let dans = dyndim(&[1]);
+        let sans = dyndim(&[1]);
+        squeeze(&mut d, &mut s);
+        assert_eq!(d, dans);
+        assert_eq!(s, sans);
+
+        let mut d = dyndim(&[0, 1, 3, 4]);
+        let mut s = dyndim(&[2, 3, 4, 5]);
+        let dans = dyndim(&[0, 3, 4]);
+        let sans = dyndim(&[2, 4, 5]);
+        squeeze(&mut d, &mut s);
+        assert_eq!(d, dans);
+        assert_eq!(s, sans);
     }
 }
