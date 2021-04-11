@@ -32,7 +32,7 @@ use std::slice::{self, Iter as SliceIter, IterMut as SliceIterMut};
 /// Base for iterators over all axes.
 ///
 /// Iterator element type is `*mut A`.
-pub struct Baseiter<A, D> {
+pub(crate) struct Baseiter<A, D> {
     ptr: *mut A,
     dim: D,
     strides: D,
@@ -319,7 +319,7 @@ pub struct Iter<'a, A, D> {
 }
 
 /// Counted read only iterator
-pub struct ElementsBase<'a, A, D> {
+pub(crate) struct ElementsBase<'a, A, D> {
     inner: Baseiter<A, D>,
     life: PhantomData<&'a A>,
 }
@@ -336,7 +336,7 @@ pub struct IterMut<'a, A, D> {
 /// An iterator over the elements of an array.
 ///
 /// Iterator element type is `&'a mut A`.
-pub struct ElementsBaseMut<'a, A, D> {
+pub(crate) struct ElementsBaseMut<'a, A, D> {
     inner: Baseiter<A, D>,
     life: PhantomData<&'a mut A>,
 }
@@ -765,7 +765,7 @@ where
 }
 
 #[derive(Debug)]
-pub struct AxisIterCore<A, D> {
+struct AxisIterCore<A, D> {
     /// Index along the axis of the value of `.next()`, relative to the start
     /// of the axis.
     index: Ix,
@@ -1443,7 +1443,7 @@ send_sync_read_write!(ElementsBaseMut);
 ///
 /// The iterator must produce exactly the number of elements it reported or
 /// diverge before reaching the end.
-pub unsafe trait TrustedIterator {}
+pub(crate) unsafe trait TrustedIterator {}
 
 use crate::indexes::IndicesIterF;
 use crate::iter::IndicesIter;
@@ -1467,7 +1467,7 @@ unsafe impl<D> TrustedIterator for IndicesIter<D> where D: Dimension {}
 unsafe impl<D> TrustedIterator for IndicesIterF<D> where D: Dimension {}
 
 /// Like Iterator::collect, but only for trusted length iterators
-pub fn to_vec<I>(iter: I) -> Vec<I::Item>
+pub(crate) fn to_vec<I>(iter: I) -> Vec<I::Item>
 where
     I: TrustedIterator + ExactSizeIterator,
 {
@@ -1475,7 +1475,7 @@ where
 }
 
 /// Like Iterator::collect, but only for trusted length iterators
-pub fn to_vec_mapped<I, F, B>(iter: I, mut f: F) -> Vec<B>
+pub(crate) fn to_vec_mapped<I, F, B>(iter: I, mut f: F) -> Vec<B>
 where
     I: TrustedIterator + ExactSizeIterator,
     F: FnMut(I::Item) -> B,
