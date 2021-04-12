@@ -8,6 +8,7 @@
 #![crate_name = "ndarray"]
 #![doc(html_root_url = "https://docs.rs/ndarray/0.15/")]
 #![allow(
+    clippy::redundant_pattern_matching, // if let is sometimes good style
     clippy::many_single_char_names,
     clippy::deref_addrof,
     clippy::unreadable_literal,
