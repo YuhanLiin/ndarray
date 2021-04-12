@@ -10,7 +10,7 @@
 mod macros;
 
 mod axis;
-mod base;
+pub(crate) mod base;
 mod chunks;
 pub mod iter;
 mod lanes;

@@ -728,36 +728,6 @@ where
     }
 }
 
-/// Move the axis which has the smallest absolute stride and a length
-/// greater than one to be the last axis.
-pub fn move_min_stride_axis_to_last<D>(dim: &mut D, strides: &mut D)
-where
-    D: Dimension,
-{
-    debug_assert_eq!(dim.ndim(), strides.ndim());
-    match dim.ndim() {
-        0 | 1 => {}
-        2 => {
-            if dim[1] <= 1
-                || dim[0] > 1 && (strides[0] as isize).abs() < (strides[1] as isize).abs()
-            {
-                dim.slice_mut().swap(0, 1);
-                strides.slice_mut().swap(0, 1);
-            }
-        }
-        n => {
-            if let Some(min_stride_axis) = (0..n)
-                .filter(|&ax| dim[ax] > 1)
-                .min_by_key(|&ax| (strides[ax] as isize).abs())
-            {
-                let last = n - 1;
-                dim.slice_mut().swap(last, min_stride_axis);
-                strides.slice_mut().swap(last, min_stride_axis);
-            }
-        }
-    }
-}
-
 /// Remove axes with length one, except never removing the last axis.
 pub(crate) fn squeeze<D>(dim: &mut D, strides: &mut D)
 where
@@ -801,7 +771,9 @@ pub(crate) fn sort_axes_to_standard<D>(dim: &mut D, strides: &mut D)
 where
     D: Dimension,
 {
-    debug_assert!(dim.ndim() > 1);
+    if dim.ndim() <= 1 {
+        return;
+    }
     debug_assert_eq!(dim.ndim(), strides.ndim());
     // bubble sort axes
     let mut changed = true;
@@ -809,6 +781,7 @@ where
         changed = false;
         for i in 0..dim.ndim() - 1 {
             // make sure higher stride axes sort before.
+            debug_assert!(strides.get_stride(Axis(i)) >= 0);
             if strides.get_stride(Axis(i)).abs() < strides.get_stride(Axis(i + 1)).abs() {
                 changed = true;
                 dim.slice_mut().swap(i, i + 1);

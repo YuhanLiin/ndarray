@@ -77,7 +77,7 @@ where
     type IntoIter = WindowsIter<'a, A, D>;
     fn into_iter(self) -> Self::IntoIter {
         WindowsIter {
-            iter: self.base.into_elements_base(),
+            iter: self.base.into_elements_base_any_order(),
             window: self.window,
             strides: self.strides,
         }

@@ -147,8 +147,7 @@ pub use crate::slice::{
     MultiSliceArg, NewAxis, Slice, SliceArg, SliceInfo, SliceInfoElem, SliceNextDim,
 };
 
-use crate::iterators::Baseiter;
-use crate::iterators::{ElementsBase, ElementsBaseMut, Iter, IterMut};
+use crate::iterators::{ElementsBase, ElementsBaseMut};
 
 pub use crate::arraytraits::AsArray;
 #[cfg(feature = "std")]

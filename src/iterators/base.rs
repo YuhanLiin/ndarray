@@ -62,16 +62,6 @@ impl<A, D: Dimension> Baseiter<A, D> {
     /// to be correct to avoid performing an unsafe pointer offset while
     /// iterating.
     #[inline]
-    pub unsafe fn new(ptr: *mut A, dim: D, strides: D) -> Baseiter<A, D> {
-        Self::new_with_order::<NoOptimization>(ptr, dim, strides)
-    }
-}
-
-impl<A, D: Dimension> Baseiter<A, D> {
-    /// Creating a Baseiter is unsafe because shape and stride parameters need
-    /// to be correct to avoid performing an unsafe pointer offset while
-    /// iterating.
-    #[inline]
     pub unsafe fn new_with_order<Flags: OrderOption>(mut ptr: *mut A, mut dim: D, mut strides: D)
         -> Baseiter<A, D>
     {
@@ -246,9 +236,9 @@ clone_bounds!(
 );
 
 impl<'a, A, D: Dimension> ElementsBase<'a, A, D> {
-    pub fn new(v: ArrayView<'a, A, D>) -> Self {
+    pub fn new<F: OrderOption>(v: ArrayView<'a, A, D>) -> Self {
         ElementsBase {
-            inner: v.into_base_iter(),
+            inner: v.into_base_iter::<F>(),
             life: PhantomData,
         }
     }
@@ -332,7 +322,7 @@ where
             inner: if let Some(slc) = self_.to_slice() {
                 ElementsRepr::Slice(slc.iter())
             } else {
-                ElementsRepr::Counted(self_.into_elements_base())
+                ElementsRepr::Counted(self_.into_elements_base_preserve_order())
             },
         }
     }
@@ -346,7 +336,7 @@ where
         IterMut {
             inner: match self_.try_into_slice() {
                 Ok(x) => ElementsRepr::Slice(x.iter_mut()),
-                Err(self_) => ElementsRepr::Counted(self_.into_elements_base()),
+                Err(self_) => ElementsRepr::Counted(self_.into_elements_base_preserve_order()),
             },
         }
     }
@@ -391,9 +381,9 @@ pub(crate) struct ElementsBaseMut<'a, A, D> {
 }
 
 impl<'a, A, D: Dimension> ElementsBaseMut<'a, A, D> {
-    pub fn new(v: ArrayViewMut<'a, A, D>) -> Self {
+    pub fn new<F: OrderOption>(v: ArrayViewMut<'a, A, D>) -> Self {
         ElementsBaseMut {
-            inner: v.into_base_iter(),
+            inner: v.into_base_iter::<F>(),
             life: PhantomData,
         }
     }

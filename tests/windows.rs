@@ -5,6 +5,9 @@
     clippy::many_single_char_names
 )]
 
+use std::collections::HashSet;
+use std::hash::Hash;
+
 use ndarray::prelude::*;
 use ndarray::Zip;
 
@@ -117,6 +120,20 @@ fn test_window_zip() {
     }
 }
 
+fn set<T>(iter: impl IntoIterator<Item = T>) -> HashSet<T>
+where
+    T: Eq + Hash
+{
+    iter.into_iter().collect()
+}
+
+/// Assert equal sets (same collection but order doesn't matter)
+macro_rules! assert_set_eq {
+    ($a:expr, $b:expr) => {
+        assert_eq!(set($a), set($b))
+    }
+}
+
 #[test]
 fn test_window_neg_stride() {
     let array = Array::from_iter(1..10).into_shape((3, 3)).unwrap();
@@ -131,24 +148,24 @@ fn test_window_neg_stride() {
     answer.invert_axis(Axis(1));
     answer.map_inplace(|a| a.invert_axis(Axis(1)));
 
-    itertools::assert_equal(
+    assert_set_eq!(
         array.slice(s![.., ..;-1]).windows((2, 2)),
-        answer.iter()
+        answer.iter().map(Array::view)
     );
 
     answer.invert_axis(Axis(0));
     answer.map_inplace(|a| a.invert_axis(Axis(0)));
 
-    itertools::assert_equal(
+    assert_set_eq!(
         array.slice(s![..;-1, ..;-1]).windows((2, 2)),
-        answer.iter()
+        answer.iter().map(Array::view)
     );
 
     answer.invert_axis(Axis(1));
     answer.map_inplace(|a| a.invert_axis(Axis(1)));
 
-    itertools::assert_equal(
+    assert_set_eq!(
         array.slice(s![..;-1, ..]).windows((2, 2)),
-        answer.iter()
+        answer.iter().map(Array::view)
     );
 }

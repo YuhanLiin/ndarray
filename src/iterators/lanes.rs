@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use crate::imp_prelude::*;
 use crate::{Layout, NdProducer};
 use crate::iterators::Baseiter;
+use crate::iterators::base::NoOptimization;
 
 impl_ndproducer! {
     ['a, A, D: Dimension]
@@ -83,7 +84,7 @@ where
     type IntoIter = LanesIter<'a, A, D>;
     fn into_iter(self) -> Self::IntoIter {
         LanesIter {
-            iter: self.base.into_base_iter(),
+            iter: self.base.into_base_iter::<NoOptimization>(),
             inner_len: self.inner_len,
             inner_stride: self.inner_stride,
             life: PhantomData,
@@ -134,7 +135,7 @@ where
     type IntoIter = LanesIterMut<'a, A, D>;
     fn into_iter(self) -> Self::IntoIter {
         LanesIterMut {
-            iter: self.base.into_base_iter(),
+            iter: self.base.into_base_iter::<NoOptimization>(),
             inner_len: self.inner_len,
             inner_stride: self.inner_stride,
             life: PhantomData,

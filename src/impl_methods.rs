@@ -19,7 +19,7 @@ use crate::argument_traits::AssignElem;
 use crate::dimension;
 use crate::dimension::IntoDimension;
 use crate::dimension::{
-    abs_index, axes_of, do_slice, merge_axes, move_min_stride_axis_to_last,
+    abs_index, axes_of, do_slice, merge_axes,
     offset_from_ptr_to_memory, size_of_shape_checked, stride_offset, Axes,
 };
 use crate::dimension::broadcast::co_broadcast;
@@ -316,7 +316,7 @@ where
     where
         S: Data,
     {
-        IndexedIter::new(self.view().into_elements_base())
+        IndexedIter::new(self.view().into_elements_base_keep_dims())
     }
 
     /// Return an iterator of indexes and mutable references to the elements of the array.
@@ -329,7 +329,7 @@ where
     where
         S: DataMut,
     {
-        IndexedIterMut::new(self.view_mut().into_elements_base())
+        IndexedIterMut::new(self.view_mut().into_elements_base_keep_dims())
     }
 
     /// Return a sliced view of the array.
@@ -2175,9 +2175,7 @@ where
         if let Some(slc) = self.as_slice_memory_order() {
             slc.iter().fold(init, f)
         } else {
-            let mut v = self.view();
-            move_min_stride_axis_to_last(&mut v.dim, &mut v.strides);
-            v.into_elements_base().fold(init, f)
+            self.view().into_elements_base_any_order().fold(init, f)
         }
     }
 
@@ -2295,9 +2293,7 @@ where
         match self.try_as_slice_memory_order_mut() {
             Ok(slc) => slc.iter_mut().for_each(f),
             Err(arr) => {
-                let mut v = arr.view_mut();
-                move_min_stride_axis_to_last(&mut v.dim, &mut v.strides);
-                v.into_elements_base().for_each(f);
+                arr.view_mut().into_elements_base_any_order().for_each(f);
             }
         }
     }
